@@ -28,9 +28,9 @@ import numpy as np
 class learnToMove:
 
     def __init__(self):
-        self.learnRate = rospy.get_param('~/learnRate', 0.7) #LearnRate
-        self.epsilon = rospy.get_param('~/epsilon', 0.4) #Randomness
-        self.gamma = rospy.get_param('~/gamma', 0.9) #forQCalc
+        self.learnRate = rospy.get_param('~/learnRate', 0.1) #LearnRate
+        self.epsilon = rospy.get_param('~/epsilon', 0.2) #Randomness
+        self.gamma = rospy.get_param('~/gamma', 0.7) #forQCalc
         self.actionValues = rospy.get_param('~/actionValues', [0.2,0.3,0.4, 0.2]) #Speed0,Speed1,Speed2,SpeedTurn
         self.maxEpisodes = rospy.get_param('~/maxEpisodes', 5)
         self.amountBlocks = rospy.get_param('~/amountBlocks', 11)
@@ -194,4 +194,4 @@ class learnToMove:
 if __name__ == '__main__':
     rospy.init_node('learnToMove')
     learnToMove = learnToMove()
-    learnToMove.run(rate=30)
+    learnToMove.run(rate=15)
