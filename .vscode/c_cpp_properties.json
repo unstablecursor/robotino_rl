@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "",
+        "limitSymbolsToIncludedHeaders": true
+      },
+      "includePath": [
+        "/home/katja/robotics_ws/devel/include/**",
+        "/opt/ros/noetic/include/**",
+        "/home/katja/robotics_ws/src/pcimr_tutorial_01/my_package_tut1/include/**",
+        "/home/katja/robotics_ws/src/pcimr_tutorial_01/my_package_tut2/include/**",
+        "/home/katja/robotics_ws/src/rto_core/rto_local_move/include/**",
+        "/home/katja/robotics_ws/src/rto_core/rto_local_planner/include/**",
+        "/home/katja/robotics_ws/src/rto_core/rto_node/include/**",
+        "/home/katja/robotics_ws/src/rto_core/rto_safety/include/**",
+        "/home/katja/robotics_ws/src/rto_core/rto_teleop/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS"
+    }
+  ]
+}

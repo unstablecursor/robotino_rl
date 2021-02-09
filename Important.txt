@@ -1,0 +1,37 @@
+source /opt/ros/kinetic/setup.bash
+
+https://github.com/ge93tef/pcimr_tutorial_01/tree/finalProject
+
+C:\Users\Katja\AppData\Local\Packages\CanonicalGroupLimited.UbuntuonWindows_79rhkp1fndgsc\LocalState\rootfs\etc\ros
+
+export DISPLAY=localhost:0.0 >> ~/.bashrc
+. ~/.bashrc
+
+
+
+export LIBGL_ALWAYS_INDIRECT=1
+~/.bashrc
+
+
+roscore
+
+https://www.how2shout.com/how-to/how-to-upgrade-ubuntu-18-04-lts-to-20-04-lts-on-wsl-windows-10.html
+
+
+
+
+//
+
+rosdep install -y --from-paths src --ignore-src --rosdistro noetic --os=ubuntu:focal
+catkin build
+
+source /opt/ros/noetic/setup.bash
+source devel/setup.bash
+roscore
+rosrun
+
+
+
+roslaunch rto_bringup_sim robot.launch
+
+rosrun pcimr_localization tut3Node

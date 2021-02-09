@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="robot_move_probabilities" default="[0.9, 0.04, 0.04, 0.0, 0.02]"/> 
+
+    <node pkg="pcimr_simulation" type="simple_sim_node" name="simple_sim_node" output="screen" respawn="false" respawn_delay="0">
+        <rosparam param="robot_move_probabilities" subst_value="True">$(arg robot_move_probabilities)</rosparam> 
+    </node>
+
+    <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find pcimr_simulation)/config/simple-sim.rviz"/>
+</launch>

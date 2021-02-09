@@ -1,0 +1,18 @@
+<package format="2">
+  <name>rto_worlds</name>
+  <version>0.0.0</version>
+  <description>The rto_worlds package</description>
+  <maintainer email="robin.dietrich@tum.de"></maintainer>
+  <author email="robin.dietrich@tum.de">Robin Dietrich</author>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+
+
+  <!-- The export tag contains other, unspecified, tags -->
+  <export>
+    <!-- Other tools can request additional information be placed here -->
+
+  </export>
+</package>

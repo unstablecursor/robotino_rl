@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+
+import rospy
+import rospkg
+import numpy as np
+import os
+import sys
+import tty
+import termios
+
+from threading import Lock
+
+from std_msgs.msg import String
+from geometry_msgs.msg import Point
+from nav_msgs.msg import Path
+
+
+MOVE_IDS = ['N', 'S', 'W', 'E']
+MOVE_NAMES = {'N': 'North', 'S': 'South', 'W': 'West', 'E': 'East'}
+
+
+def get_char() -> str:
+    fd = sys.stdin.fileno()
+    old_settings = termios.tcgetattr(fd)
+    try:
+        tty.setraw(sys.stdin.fileno())
+        ch = sys.stdin.read(1)
+    finally:
+        termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    return ch
+
+
+class RobotMover:
+    """
+    A node for moving the robot based on a published global path
+    """
+
+    def __init__(self):
+        """
+        Initializes a KeyRobotMover instance, including initialization of the KeyRobotMover node itself and all
+        Publishers/Subscribers.
+
+        @param num_sensors: The number of sensors used for the simulation (4/8).
+        """
+        # Initialize Member Variables
+        self.robot_pos = None
+        self.path = None
+        self.moving = False
+
+        # Initialize Publishers
+        self.pub_move = rospy.Publisher('/move', String, queue_size=10)
+
+        # Initialize Subscribers
+        self.sub_path = rospy.Subscriber('/global_path', Path, self.cb_path)
+        self.sub_robot_pos = rospy.Subscriber('/robot_pos', Point, self.cb_robot_pos)
+
+        # Setup messages for publishing
+        self.msg_move = String()
+
+    def cb_path(self, msg):
+        """
+        A callback for the path received by the global planner.
+
+        @param msg: The message containing the path for the robot to drive.
+        """
+        self.path = msg
+        self.moving = True
+
+    def cb_robot_pos(self, msg):
+        """
+        A callback for the robot position received by the simulator node.
+
+        @param msg: The message containing the robot position in the simulated world.
+        """
+        self.robot_pos = msg
+
+    def get_next_move(self):
+        current_pos_id = -1
+        for i, pose in enumerate(self.path.poses):
+            if pose.pose.position.x == self.robot_pos.x and pose.pose.position.y == self.robot_pos.y:
+                current_pos_id = i
+                break
+
+        if i == len(self.path.poses)-1:
+            rospy.loginfo('Goal reached! Stop moving now.')
+            self.moving = False
+            return None
+        
+        next_x = self.path.poses[i+1].pose.position.x
+        next_y = self.path.poses[i+1].pose.position.y
+
+        self.path.poses.pop(i)
+
+        cartesian_move = [next_x-self.robot_pos.x, next_y-self.robot_pos.y]
+
+        if cartesian_move == [0,1]:
+            move_id = 'N'
+        elif cartesian_move == [0,-1]:
+            move_id = 'S'
+        elif cartesian_move == [1,0]:
+            move_id = 'E'
+        elif cartesian_move == [-1,0]:
+            move_id = 'W'
+        
+        return move_id
+
+
+    def run(self, rate: float = 1):
+        """
+        Periodically publishes the move command based on the current path.
+
+        @param rate: The rate at which the topics are published.
+        """
+
+        while not rospy.is_shutdown():
+            
+            if self.path is None or self.robot_pos is None or not self.moving:
+                if rate:
+                    rospy.sleep(1/rate)
+                continue
+
+            # Update message data
+            move_id = self.get_next_move()
+            if move_id is not None:
+                self.msg_move.data = move_id
+
+                # Publish messages
+                self.pub_move.publish(self.msg_move)
+
+            # Sleep for a while before publishing new messages. 
+            if rate:
+                rospy.sleep(1/rate)
+
+
+if __name__ == "__main__":
+    rospy.init_node('key_robot_mover')
+
+    robot_mover_node = RobotMover()
+    robot_mover_node.run(rate=1)
