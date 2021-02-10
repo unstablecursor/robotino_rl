@@ -88,10 +88,10 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <state world_name='default'>
-      <sim_time>844 841000000</sim_time>
-      <real_time>340 505985176</real_time>
-      <wall_time>1612744275 855685879</wall_time>
-      <iterations>336461</iterations>
+      <sim_time>978 486000000</sim_time>
+      <real_time>134 382595641</real_time>
+      <wall_time>1612999518 605928641</wall_time>
+      <iterations>133645</iterations>
       <model name='cp'>
         <pose>5.64794 9.78849 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -466,7 +466,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>4.81294 -11.4568 63.8614 0 1.4418 2.41223</pose>
+        <pose>12.7654 -0.281288 49.8416 -7e-06 1.5698 1.85224</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -2477,7 +2477,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2494,7 +2494,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>5.72197 9.72064 0 0 -0 0</pose>
+      <pose>4.82068 8.2584 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_0'>
       <link name='link'>
@@ -2518,7 +2518,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2535,7 +2535,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>14.266 12.4444 0 0 -0 0</pose>
+      <pose>6.83072 11.8637 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_1'>
       <link name='link'>
@@ -2559,7 +2559,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2576,7 +2576,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>18.1129 8.80217 0 0 -0 0</pose>
+      <pose>17.6333 9.48528 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_2'>
       <link name='link'>
@@ -2600,7 +2600,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2617,7 +2617,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>18.6107 -0.478573 0 0 -0 0</pose>
+      <pose>4.82503 5.89777 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_3'>
       <link name='link'>
@@ -2641,7 +2641,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2658,7 +2658,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>18.3037 -8.82149 0 0 -0 0</pose>
+      <pose>5.06685 4.92901 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_4'>
       <link name='link'>
@@ -2682,7 +2682,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2699,7 +2699,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>11.9152 -13.2947 0 0 -0 0</pose>
+      <pose>4.63802 2.68958 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_5'>
       <link name='link'>
@@ -2723,7 +2723,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2740,7 +2740,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>4.88303 -10.1318 0 0 -0 0</pose>
+      <pose>4.57099 2.78579 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_6'>
       <link name='link'>
@@ -2764,7 +2764,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -2781,7 +2781,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>4.41227 -0.33808 0 0 -0 0</pose>
+      <pose>4.71171 3.36478 0 0 -0 0</pose>
     </model>
     <model name='cp'>
       <link name='link'>
@@ -2805,7 +2805,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.3</radius>
+              <radius>0.18</radius>
             </sphere>
           </geometry>
           <material>
@@ -2822,7 +2822,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>5.64794 9.78849 0 0 -0 0</pose>
+      <pose>4.11838 4.8854 0 0 -0 0</pose>
     </model>
   </world>
 </sdf>
