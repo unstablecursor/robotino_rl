@@ -88,10 +88,10 @@
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
     <state world_name='default'>
-      <sim_time>1325 42000000</sim_time>
-      <real_time>820 619377265</real_time>
-      <wall_time>1612813180 123241757</wall_time>
-      <iterations>816662</iterations>
+      <sim_time>1516 859000000</sim_time>
+      <real_time>192 703792617</real_time>
+      <wall_time>1613000124 503889607</wall_time>
+      <iterations>191817</iterations>
       <model name='corners'>
         <pose>-1.10692 -1.20734 0 0 -0 0</pose>
         <scale>1 1 1</scale>
@@ -187,80 +187,80 @@
         </link>
       </model>
       <model name='cp'>
-        <pose>4.96884 7.06512 0 0 -0 0</pose>
+        <pose>5.24205 7.26516 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>4.96884 7.06512 0 0 -0 0</pose>
+          <pose>5.24205 7.26516 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker'>
-        <pose>5.46057 -0.048917 0 0 -0 0</pose>
+        <pose>5.25816 7.21767 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>5.46057 -0.048917 0 0 -0 0</pose>
+          <pose>5.25816 7.21767 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_0'>
-        <pose>4.91219 7.02746 0 0 -0 0</pose>
+        <pose>-7.69254 7.10157 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>4.91219 7.02746 0 0 -0 0</pose>
+          <pose>-7.69254 7.10157 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_1'>
-        <pose>-7.72935 7.16074 0 0 -0 0</pose>
+        <pose>-7.78977 -0.405556 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>-7.72935 7.16074 0 0 -0 0</pose>
+          <pose>-7.78977 -0.405556 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_2'>
-        <pose>-7.65465 -0.172689 0 0 -0 0</pose>
+        <pose>1.3728 -0.327636 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>-7.65465 -0.172689 0 0 -0 0</pose>
+          <pose>1.3728 -0.327636 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_3'>
-        <pose>1.46954 -0.469395 0 0 -0 0</pose>
+        <pose>1.51783 -9.46129 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>1.46954 -0.469395 0 0 -0 0</pose>
+          <pose>1.51783 -9.46129 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_4'>
-        <pose>1.78972 -9.24677 0 0 -0 0</pose>
+        <pose>5.34825 -9.18625 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>1.78972 -9.24677 0 0 -0 0</pose>
+          <pose>5.34825 -9.18625 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='cp_marker_5'>
-        <pose>5.36911 -9.1563 0 0 -0 0</pose>
+        <pose>5.38246 -0.028662 0 0 -0 0</pose>
         <scale>1 1 1</scale>
         <link name='link'>
-          <pose>5.36911 -9.1563 0 0 -0 0</pose>
+          <pose>5.38246 -0.028662 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
           <acceleration>0 0 0 0 -0 0</acceleration>
           <wrench>0 0 0 0 -0 0</wrench>
@@ -282,7 +282,7 @@
     </state>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>15.241 -20.6614 30.8863 0 1.0138 1.87223</pose>
+        <pose>-0.82328 -9.03365 44.0875 1e-06 1.5058 1.73329</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -966,6 +966,47 @@
       </link>
       <static>1</static>
     </model>
+    <model name='cp_marker'>
+      <link name='link'>
+        <inertial>
+          <mass>1</mass>
+          <inertia>
+            <ixx>0.1</ixx>
+            <ixy>0</ixy>
+            <ixz>0</ixz>
+            <iyy>0.1</iyy>
+            <iyz>0</iyz>
+            <izz>0.1</izz>
+          </inertia>
+          <pose>0 0 0 0 -0 0</pose>
+        </inertial>
+        <self_collide>0</self_collide>
+        <enable_wind>0</enable_wind>
+        <kinematic>0</kinematic>
+        <gravity>0</gravity>
+        <pose>0 0 0 0 -0 0</pose>
+        <visual name='visual'>
+          <geometry>
+            <sphere>
+              <radius>0.1</radius>
+            </sphere>
+          </geometry>
+          <material>
+            <script>
+              <name>Gazebo/Black</name>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+            </script>
+            <shader type='pixel'/>
+          </material>
+          <pose>0 0 0 0 -0 0</pose>
+          <transparency>0</transparency>
+          <cast_shadows>1</cast_shadows>
+        </visual>
+      </link>
+      <static>0</static>
+      <allow_auto_disable>1</allow_auto_disable>
+      <pose>-11.0884 0.763879 0 0 -0 0</pose>
+    </model>
     <model name='cp_marker_0'>
       <link name='link'>
         <inertial>
@@ -988,7 +1029,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1005,7 +1046,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>4.91219 7.02746 0 0 -0 0</pose>
+      <pose>-12.892 -0.330531 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_1'>
       <link name='link'>
@@ -1029,7 +1070,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1046,7 +1087,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>-7.72935 7.16074 0 0 -0 0</pose>
+      <pose>-10.7629 -0.475947 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_2'>
       <link name='link'>
@@ -1070,7 +1111,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1087,7 +1128,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>-7.65465 -0.172689 0 0 -0 0</pose>
+      <pose>-10.8137 -2.35816 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_3'>
       <link name='link'>
@@ -1111,7 +1152,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1128,7 +1169,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>1.46954 -0.469395 0 0 -0 0</pose>
+      <pose>-12.5756 -1.69662 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_4'>
       <link name='link'>
@@ -1152,7 +1193,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1169,7 +1210,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>1.78972 -9.24677 0 0 -0 0</pose>
+      <pose>-12.5076 -4.16913 0 0 -0 0</pose>
     </model>
     <model name='cp_marker_5'>
       <link name='link'>
@@ -1193,7 +1234,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.2</radius>
+              <radius>0.1</radius>
             </sphere>
           </geometry>
           <material>
@@ -1210,48 +1251,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>5.36911 -9.1563 0 0 -0 0</pose>
-    </model>
-    <model name='cp_marker'>
-      <link name='link'>
-        <inertial>
-          <mass>1</mass>
-          <inertia>
-            <ixx>0.1</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>0.1</iyy>
-            <iyz>0</iyz>
-            <izz>0.1</izz>
-          </inertia>
-          <pose>0 0 0 0 -0 0</pose>
-        </inertial>
-        <self_collide>0</self_collide>
-        <enable_wind>0</enable_wind>
-        <kinematic>0</kinematic>
-        <gravity>0</gravity>
-        <pose>0 0 0 0 -0 0</pose>
-        <visual name='visual'>
-          <geometry>
-            <sphere>
-              <radius>0.2</radius>
-            </sphere>
-          </geometry>
-          <material>
-            <script>
-              <name>Gazebo/Black</name>
-              <uri>file://media/materials/scripts/gazebo.material</uri>
-            </script>
-            <shader type='pixel'/>
-          </material>
-          <pose>0 0 0 0 -0 0</pose>
-          <transparency>0</transparency>
-          <cast_shadows>1</cast_shadows>
-        </visual>
-      </link>
-      <static>0</static>
-      <allow_auto_disable>1</allow_auto_disable>
-      <pose>5.46057 -0.048917 0 0 -0 0</pose>
+      <pose>-12.0566 -4.60201 0 0 -0 0</pose>
     </model>
     <model name='cp'>
       <link name='link'>
@@ -1275,7 +1275,7 @@
         <visual name='visual'>
           <geometry>
             <sphere>
-              <radius>0.3</radius>
+              <radius>0.18</radius>
             </sphere>
           </geometry>
           <material>
@@ -1292,7 +1292,7 @@
       </link>
       <static>0</static>
       <allow_auto_disable>1</allow_auto_disable>
-      <pose>4.96884 7.06512 0 0 -0 0</pose>
+      <pose>-6.12497 -3.14702 0 0 -0 0</pose>
     </model>
   </world>
 </sdf>
