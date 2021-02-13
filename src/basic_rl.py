@@ -1,197 +1,233 @@
 #!/usr/bin/env python
+import os
+import math
+import random
+import numpy as np
+from threading import Lock
+
+from collections import namedtuple
+from itertools import count
+from PIL import Image
+
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import torch.nn.functional as F
+import torchvision.transforms as T
 
 import rospy
 import rosservice
+
+from nav_msgs.msg import Odometry
 from std_msgs.msg import String
 from sensor_msgs.msg import LaserScan
-from pcimr_simulation.srv import InitPos
-from geometry_msgs.msg import Twist
-import random
+from geometry_msgs.msg import Twist, Point
+
 from std_srvs.srv import Empty
-import numpy as np
+from pcimr_simulation.srv import InitPos
+from gazebo_msgs.srv import GetModelState, GetModelStateRequest, SetModelState, SetModelStateRequest
 
-#Actions (To be Change?)
-#0: Stay
-#1: Speed X
-#2: Slow X
-#3: Speed Y
-#4: Slow Y
-#5: Stop
+from components.parameters import *
+from components.memory import ReplayMemory
+from components.network import DQN
+from controllers.controller_with_goal import ControllerNode
 
-#Rewards:
-#0: -100 Hit Wall
-#1: +10 Get Faster
-#2: -5 Get Slower
-#3: -30 Stop
-#4: +100 Finish Round
+steps_done = 0
 
-class learnToMove:
+Transition = namedtuple('Transition',
+                        ('state', 'action', 'next_state', 'reward'))
 
-    def __init__(self):
-        self.learnRate = rospy.get_param('~/learnRate', 0.1) #LearnRate
-        self.epsilon = rospy.get_param('~/epsilon', 0.2) #Randomness
-        self.gamma = rospy.get_param('~/gamma', 0.7) #forQCalc
-        self.actionValues = rospy.get_param('~/actionValues', [0.2,0.3,0.4, 0.2]) #Speed0,Speed1,Speed2,SpeedTurn
-        self.maxEpisodes = rospy.get_param('~/maxEpisodes', 5)
-        self.amountBlocks = rospy.get_param('~/amountBlocks', 11)
-        self.newVelo = Twist()
-        self.velo_move = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.move_sub = rospy.Subscriber('/input/cmd_vel', Twist, self.callbackMove)
+class ReplayMemory(object):
+
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []
+        self.position = 0
+
+    def push(self, *args):
+        """Saves a transition."""
+        if len(self.memory) < self.capacity:
+            self.memory.append(None)
+        self.memory[self.position] = Transition(*args)
+        self.position = (self.position + 1) % self.capacity
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)
+
+
+def select_action(state):
+    global steps_done
+    sample = random.random()
+    eps_threshold = EPS_END + (EPS_START - EPS_END) * math.exp(-1. * steps_done / EPS_DECAY)
+    steps_done += 1
+    if sample > eps_threshold:
+        with torch.no_grad():
+            t = policy_net(state)
+            return torch.tensor([[t.max(0)[1]]])
+    else:
+        t = torch.tensor([[random.randrange(N_ACTIONS)]], device=device, dtype=torch.long)
+        return t
+
+
+def optimize_model():
+    if len(memory) < BATCH_SIZE:
+        return
+    transitions = memory.sample(BATCH_SIZE)
+    # Transpose the batch (see https://stackoverflow.com/a/19343/3343043 for
+    # detailed explanation). This converts batch-array of Transitions
+    # to Transition of batch-arrays.
+    batch = Transition(*zip(*transitions))
+
+    # Compute a mask of non-final states and concatenate the batch elements
+    # (a final state would've been the one after which simulation ended)
+    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
+                                          batch.next_state)), device=device, dtype=torch.bool)
+    non_final_next_states = torch.cat([s for s in batch.next_state
+                                                if s is not None])
     
-    def callbackMove(self, Twist):
-        self.newVelo = Twist
+    state_batch = torch.cat(batch.state)
+    action_batch = torch.cat(batch.action)
+    reward_batch = torch.cat(batch.reward)
 
-    def getSpaceState(self,scan):
-        stateSpace = np.zeros((1,self.amountBlocks+1))
-        Q=np.zeros((stateSpace.shape[0], self.actions.shape[0]))
-        state, stateSpace, Q = self.addNewState(scan, stateSpace, Q)
-        return stateSpace
+    state_batch=torch.reshape(state_batch, (BATCH_SIZE,N_INPUTS))
+    # Compute Q(s_t, a) 
+    state_action_values = policy_net(state_batch).gather(1, action_batch)
 
-    def transformState(self,state):
-        split=state.shape[0]//self.amountBlocks
-        newState=np.zeros(self.amountBlocks+1)
-        for i in range(0,self.amountBlocks-1):
-            block = state[(i*split):(split*(i+1))]
-            newState[i]=np.amin(block)
-        newState[self.amountBlocks-1] = np.amin(state[(i+1)*split:])
-        newState[-1]=self.newVelo.linear.x
-        return newState
+    # Compute V(s_{t+1}) for all next states.
+    next_state_values = torch.zeros(BATCH_SIZE, device=device)
+    non_final_next_states=torch.reshape(non_final_next_states, (BATCH_SIZE,N_INPUTS))
+    next_state_values[non_final_mask] = target_net(non_final_next_states).max(1)[0].detach()
 
-    def addNewState(self,state, stateSpace,Q):
-        newState=self.transformState(state)
-        stateSpace=np.append(stateSpace,[newState], axis=0) #Grow State Space
-        Q=np.append(Q,[np.zeros(Q.shape[1])], axis=0) #Grow QTable
-        return newState, stateSpace, Q
+    # Compute the expected Q values
+    expected_state_action_values = (next_state_values * GAMMA) + reward_batch
+    # Compute Huber loss
+    if LOSS_TYPE == "huber_loss":
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1), beta=BETA)
+    else:
+        # TODO : Add new loss types here if needed
+        loss = F.smooth_l1_loss(state_action_values, expected_state_action_values.unsqueeze(1), beta=BETA)
 
-    def getState(self,state, stateSpace, Q):
-        x = 0
-        if(state.shape[0] != self.amountBlocks):
-            state=self.transformState(state)
-        for i in stateSpace:
-            if((state==i).all()):
-                return stateSpace[x],x, stateSpace, Q
-            x=x+1
-        state, stateSpace, Q = self.addNewState(state,stateSpace, Q)
-        return state, stateSpace.shape[0]-1, stateSpace, Q
+    # Optimize the model
+    loss_float = loss.item()
+    optimizer.zero_grad()
+    loss.backward()
+    for param in policy_net.parameters():
+        param.data.clamp_(-1, 1)
+    optimizer.step()
+    return loss_float
 
+# if gpu is to be used
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    def get_distance(self):
-        self.msg = rospy.wait_for_message("scan", LaserScan)
-        self.scan = np.round(np.array(self.msg.ranges), 1)
-        self.actions = np.array(['LeftTurn', 'Speed0', 'RightTurn', 'Speed1', 'Speed2']) #See above
-        self.stateSpace = self.getSpaceState(self.scan)
-        self.QTable = np.zeros((2, self.actions.shape[0] ))
-        self.rewards = np.array([0.04,0.02,0.01,-0.1, 0.05, 0.1, 0.001]) # outerDistance, InnerDistance, Straight, TooCloseToWall, Speed, ScaleDiff, Reward Steps
-        self.reset_simulation = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
-        self.reset_simulation()
+policy_net = DQN().to(device)
+target_net = DQN().to(device)
 
-    def checkDistance(self):
-        self.msg = rospy.wait_for_message("scan", LaserScan)
-        self.scan = np.round(np.array(self.msg.ranges), 1)
-        #return np.amin(self.scan[61:184])
-
+if policy_checkpoint_path != None:
+    print("loading network")
+    #load policy net
+    policy_checkpoint = torch.load(policy_checkpoint_path)
+    policy_net.load_state_dict(policy_checkpoint['model_state_dict'])
+    optimizer.load_state_dict(policy_checkpoint['optimizer_state_dict'])
     
-    def makeAction(self, action, actionValues):
-        reward = 0
-        lost = False
-        #print(action)
-        if(action =='Speed2'):
-            self.newVelo.angular.z = 0.0
-            self.newVelo.linear.x = actionValues[2]
-        elif(action =='Speed1'):
-            self.newVelo.angular.z = 0.0
-            self.newVelo.linear.x = actionValues[1]
-        elif(action == 'Speed0'):
-            self.newVelo.angular.z = 0.0
-            self.newVelo.linear.x = actionValues[0]
-        elif(action == 'LeftTurn'):
-            self.newVelo.angular.z= 0.10
-            self.newVelo.linear.x = actionValues[3]
-        elif(action == 'RightTurn'):
-            self.newVelo.angular.z = -0.10
-            self.newVelo.linear.x = actionValues[3]
-        self.velo_move.publish(self.newVelo)  #Publish
-        self.checkDistance() #checkDistanceForRewards
-        if(self.newVelo.linear.x > 0.1):
-            reward = reward + self.newVelo.linear.x *self.rewards[4]
-        #Check Outer
-        if(np.abs(self.scan[33]-self.scan[212])<=0.2):
-            reward = reward + self.rewards[0]
-        #Punish Difference
-        else:
-            diff = np.abs(self.scan[33]-self.scan[212])
-            reward = reward -diff *self.rewards[5]
-        #HitWall
-        if(np.amin(self.scan)<=0.15):
-            print('Lost Game: Collision')
-            lost=True
-        if(np.amin(self.scan)<=0.3):
-            reward = reward + self.rewards[3]
-        reward = reward + self.steps * self.rewards[6]
-        return reward, lost
+    #load target net
+    target_checkpoint = torch.load(target_checkpoint_path)
+    target_net.load_state_dict(target_checkpoint['model_state_dict'])
+else:
+    target_net.load_state_dict(policy_net.state_dict())
 
-    def learn(self):
-        self.steps = 0
-        episode = 0
-        overallReward = 0
-        currentState = self.stateSpace[1]
-        done = False
-        lost = False
-        print("Episode", episode)
-        print("Epsilon", self.epsilon)
-        while not done:
-            done = False
-            if(lost):
-                episode = episode +1
-                print("Episode", episode)
-                print('Steps', self.steps)
-                print('overallReward', overallReward)
-                self.reset_simulation() 
-                currentState = self.stateSpace[1]
-                self.newVelo.linear.x = 0
-                self.newVelo.angular.z = 0
-                lost=False
-                if(episode > 14):
-                    self.epsilon = 0.3
-                if(episode > 15):
-                    self.epsilon = 0.2
-                if(overallReward > 3000 and episode > 20):
-                    self.epsilon = 0.01
-                overallReward = 0
-                print("Epsilon", self.epsilon)
-                self.steps = 0
-            if random.uniform(0,1)<self.epsilon:
-                actionId = random.randrange(self.actions.shape[0]) 
-                chooseAction = self.actions[actionId]       
-            else:
-                currentState,stateId, self.stateSpace, self.QTable=self.getState(currentState, self.stateSpace,self.QTable)
-                line = self.QTable[stateId, :]
-                if(np.count_nonzero(line)==line.shape[0]):
-                    actionId = random.randrange(self.actions.shape[0]) 
-                else:
-                    actionId = np.argmax(self.QTable[stateId, :])
-                chooseAction = self.actions[actionId]  
-            oldState=np.copy(currentState)
-            myReward, lost = self.makeAction(chooseAction,self.actionValues)
-            if(lost):
-                myReward = -150
-            currentState,stateId, self.stateSpace, self.QTable=self.getState(self.scan , self.stateSpace, self.QTable)
-            oldState,oldStateId,self.stateSpace, self.QTable=self.getState(oldState, self.stateSpace, self.QTable)
-            self.QTable[oldStateId, actionId] = self.QTable[oldStateId, actionId] + self.learnRate * (myReward+self.gamma*np.max(self.QTable[stateId, :]) - self.QTable[oldStateId,actionId])
-            self.steps = self.steps+1
-            overallReward = overallReward + myReward
-            if(self.steps >  15000):
-                lost=True
+target_net.eval()
+
+optimizer = optim.RMSprop(policy_net.parameters(), lr=LEARNING_RATE)
+memory = ReplayMemory(REPLAY_MEM_SIZE)
+
+stats_episode_durations = []
+stats_losses = []
+stats_overall_rewards = []
+stats_reward_cumulative = 0
+
+reset_simulation = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
+pause_sim = rospy.ServiceProxy('/gazebo/pause_physics', Empty)
+unpause_sim = rospy.ServiceProxy('/gazebo/unpause_physics', Empty)
+
+reset_simulation()
+if PAUSE_SIM:
+    unpause_sim()
+
+rospy.init_node('controller_node')
+simple_sim_node = ControllerNode()
 
 
+for i_episode in range(NUM_EPISODES):
+    if i_episode%SAVE_EVERY_NTH_EPISODE == 0 and i_episode != 0:
+        print("saving model after episode " + str(i_episode))
+        
+        #save policy net
+        torch.save({
+            'model_state_dict': policy_net.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict()
+            }, checkpoint_root + "/policy_net_" + str(i_episode) + ".pth")
+        
+        #save target net
+        torch.save({
+            'model_state_dict': policy_net.state_dict()
+            }, checkpoint_root + "/target_net_" + str(i_episode) + ".pth")
 
-    def run(self, rate: float = 30):
-        print("Start")
-        self.get_distance()
-        while not rospy.is_shutdown():
-            self.learn()
+    #   Initialize the environment and state
+    if i_episode == 0:
+        rospy.wait_for_message("scan", LaserScan)
+    # Get state
+    state = simple_sim_node.get_env()
 
-if __name__ == '__main__':
-    rospy.init_node('learnToMove')
-    learnToMove = learnToMove()
-    learnToMove.run(rate=15)
+    for t in count():
+        # Select and perform an action
+        action = select_action(state)
+        # Unpause simulation
+        if PAUSE_SIM:
+            unpause_sim()
+        simple_sim_node.use_action(action.item())
+        # Get reward from action
+        reward = simple_sim_node.get_reward()
+        # Wait for the new scan message to pause the simulation.
+        rospy.wait_for_message("scan", LaserScan)
+        if PAUSE_SIM:
+            pause_sim()
+        stats_reward_cumulative += reward
+        reward = torch.tensor([reward], device=device)
+    
+        next_state = simple_sim_node.get_env()
+
+        # Store the transition in memory
+        memory.push(state, action, next_state, reward)
+
+        # Move to the next state
+        state = next_state
+        
+        # Perform one step of the optimization (on the target network)
+        loss = optimize_model()
+        stats_losses.append(loss)
+
+        if reward == -1 and t > 2:
+            stats_overall_rewards.append(float(stats_reward_cumulative / (t+1)))
+            stats_reward_cumulative = 0
+            stats_episode_durations.append(t + 1)
+            reset_simulation()
+            if PAUSE_SIM:
+                pause_sim()
+            break
+        if reward == +1:
+            stats_overall_rewards.append(float(stats_reward_cumulative / (t+1)))
+            stats_reward_cumulative = 0
+            print(f"reached goal at {i_episode}th episode {t}")
+            stats_episode_durations.append(t + 1)
+            reset_simulation()
+            if PAUSE_SIM:
+                pause_sim()
+            break
+    # Update the target network, copying all weights and biases in DQN
+    if i_episode % TARGET_UPDATE == 0:
+        target_net.load_state_dict(policy_net.state_dict())
+
+print('Training complete')
