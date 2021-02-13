@@ -2,12 +2,12 @@
     <arg name="robot" default="$(optenv ROBOT p3dx)" doc="Robot type [p3dx]"/>
     <arg name="robot_env" default="$(optenv ROBOT_ENV OvalWorld1)" doc="Simulation world [OvalWorld1]"/>
     <arg name="x_pos" default="5.0"/>
-    <arg name="y_pos" default="0.0"/>
+    <arg name="y_pos" default="6.0"/>
     <arg name="z_pos" default="0.0"/>
     <arg name="yaw_pos" default="1.5"/>
 
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <arg name="world_name" value="$(find rto_worlds)/worlds/OvalWorld1.world"/> 
+        <arg name="world_name" value="$(find rto_worlds)/worlds/track1.world"/> 
         <arg name="paused" value="false"/>
         <arg name="use_sim_time" value="false"/>
         <arg name="gui" value="true"/>

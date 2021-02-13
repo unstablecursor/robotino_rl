@@ -10,226 +10,180 @@ import random
 from std_srvs.srv import Empty
 import numpy as np
 
-#Actions (To be Change?)
-#0: Stay
-#1: Speed X
-#2: Slow X
-#3: Speed Y
-#4: Slow Y
-#5: Stop
-
-#Rewards:
-#0: -100 Hit Wall
-#1: +10 Get Faster
-#2: -5 Get Slower
-#3: -30 Stop
-#4: +100 Finish Round
-
 class learnToMove:
 
     def __init__(self):
-        self.learnRate = rospy.get_param('~/learnRate', 0.5) #LearnRate
-        self.epsilon = rospy.get_param('~/epsilon', 0.8) #Randomness
-        self.gamma = rospy.get_param('~/gamma', 0.8) #forQCalc
-        self.actionValues = rospy.get_param('~/actionValues', [0.2,0.3,0.4, 0.0]) #Speed0,Speed1,Speed2,SpeedTurn
-        self.maxEpisodes = rospy.get_param('~/maxEpisodes', 5)
-        self.amountBlocks = rospy.get_param('~/amountBlocks', 8)
-        self.newVelo = Twist()
-        self.velo_move = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-        self.move_sub = rospy.Subscriber('/input/cmd_vel', Twist, self.callbackMove)
-        self.lastActionZ = np.array([0])#Z
-        self.lastScan = np.zeros((258))
-        self.episode =0
+        self.learnRate = rospy.get_param('~/learnRate', 0.2) #Learning Rate, rather small because of the amount of steps per episode
+        self.epsilon = rospy.get_param('~/epsilon', 0.5) #Amount of random actions in %
+        self.epsilonDecrease = rospy.get_param('~/epsilonDecrease', 0.9987) #Amount of random actions in %
+        self.gamma = rospy.get_param('~/gamma', 0.9) #How much does the current state influences the former one
+        self.maxEpisodes = rospy.get_param('~/maxEpisodes', 3000)#How many episodes should get trained
+        self.newVelo = Twist() #Current movement (Twist)
+        self.velo_move = rospy.Publisher('/cmd_vel', Twist, queue_size=2) #Publisher for the movement
+        self.move_sub = rospy.Subscriber('/input/cmd_vel', Twist, self.callbackMove)#Subscriber to get the movement
+        self.episode =0 #intial episode
+        self.load = rospy.get_param('~/load', True)#Load QTable or Start new one
     
+    #Callback to get current movement
     def callbackMove(self, Twist):
         self.newVelo = Twist
 
-    def getSpaceState(self,scan):
-        stateSpace = np.zeros((1,self.amountBlocks))
-        Q=np.zeros((stateSpace.shape[0], self.actions.shape[0]))
-        state, stateSpace, Q = self.addNewState(scan, stateSpace, Q)
+    #Create the initial stateSpace
+    def createStateSpace(self,scan):
+        stateSpace = np.zeros((1,7)) #Use 7 scanPoints
+        Q=np.zeros((stateSpace.shape[0], self.actions.shape[0])) #Initial QTable
+        state, stateSpace, Q = self.addNewState(scan, stateSpace, Q)#Add Scan to stateSpace, function returns more than needed
         return stateSpace
 
+    #Tranform scan into state
     def transformState(self,state):
-        split=state.shape[0]//self.amountBlocks
-        newState=np.zeros(self.amountBlocks)
-        for i in range(0,self.amountBlocks-1):
-            amountHalf = (split*(i+1)-(i*split))//2
-            newState[i]  = state[(i*split)+amountHalf]
-        amountHalf = (state.shape[0]-((i+1)*split))//2
-        newState[self.amountBlocks-1] = state[(i+1)*split+amountHalf]
+        bins = np.arange(0.0,5.8,0.2)#Build bins for further discretization
+        if(state.shape[0] == 7): #Check if the state is valid (only 7 scan points)
+            return state
+        newState=np.zeros(7)
+        newState[0] = state[0]
+        newState[1] = state[15]
+        newState[2] = state[65]
+        newState[3] = state[129]
+        newState[4] = state[179]
+        newState[5] = state[229]
+        newState[6] = state[244]
+        binnedState = np.digitize(newState,bins, right=False) #Discretize
+        count = 0
+        for i in binnedState:
+            newState[count] = bins[i-1]
+            count = count +1
         return newState
 
+    #Add the new State
     def addNewState(self,state, stateSpace,Q):
-        newState=self.transformState(state)
-        stateSpace=np.round(np.append(stateSpace,[newState], axis=0),1) #Grow State Space
-        Q=np.append(Q,[np.zeros(Q.shape[1])], axis=0) #Grow QTable
+        newState=self.transformState(state) #Transform scan into state
+        stateSpace=np.round(np.append(stateSpace,[newState], axis=0),1) #Adjust (grow) the stateSpace
+        Q=np.append(Q,[np.zeros(Q.shape[1])], axis=0) #Adjust (grow) the QTable
         return newState, stateSpace, Q
 
+    #Return state-info (id, state, stateSpace, QTable), also add if the state is new
     def getState(self,state, stateSpace, Q):
         x = 0
-        if(state.shape[0] != self.amountBlocks):
+        if(state.shape[0] != 7): #Check if state is valid
             state=self.transformState(state)
         state = np.round(state,1)
         for i in stateSpace:
-            if((state==i).all()):
+            if((state==i).all()): #Find state in stateSpace
                 return stateSpace[x],x, stateSpace, Q
             x=x+1
-        state, stateSpace, Q = self.addNewState(state,stateSpace, Q)
+        state, stateSpace, Q = self.addNewState(state,stateSpace, Q) #If the state is new, add it
         return state, stateSpace.shape[0]-1, stateSpace, Q
 
-
-    def get_distance(self):
+    #Initial function, build stateSpace and QTable
+    def init(self):
         self.msg = rospy.wait_for_message("scan", LaserScan)
-        self.scan = np.round(np.array(self.msg.ranges), 2)
-        self.actions = np.array(['Speed0','LeftTurn', 'RightTurn','LeftTurn1', 'RightTurn1']) #See above
-        self.stateSpace = self.getSpaceState(self.scan)
-        self.QTable = np.zeros((2, self.actions.shape[0] ))
-        self.rewards = np.array([0.3,0.1,0.4,0.21, 0.8, 0.2, 20]) # Drive to Wall, DiffGotBetter, Get Away from Wall, Driving, 90DegDiff, DistanceFrontGrew, Lost
-        self.reset_simulation = rospy.ServiceProxy('/gazebo/reset_simulation', Empty)
+        self.scan = np.round(np.array(self.msg.ranges), 1)
+        self.actions = np.array(['Forward','LeftTurn', 'RightTurn']) #Actions to choose from, drive forward or to the left/right
+        if(self.load == False): #Check if a QTable and SpaceState is loaded
+            self.stateSpace = self.createStateSpace(self.scan)
+            self.QTable = np.zeros((self.stateSpace.shape[0], self.actions.shape[0] ))
+        else: #Create new stateSpace and or QTable
+            self.stateSpace = np.loadtxt('StateSpace_Track1.out', delimiter=';')
+            self.QTable = np.loadtxt('QTable_Track1.out', delimiter=';')
+        self.reset_simulation = rospy.ServiceProxy('/gazebo/reset_simulation', Empty) #Reset Gazebo initially (security reasons)
         self.reset_simulation()
-
+    
+    #get the new scan
     def checkDistance(self):
         self.msg = rospy.wait_for_message("scan", LaserScan)
-        self.scan = np.round(np.array(self.msg.ranges), 2)
+        self.scan = np.round(np.array(self.msg.ranges), 1)
         
-
-    
-    def makeAction(self, action, actionValues):
+    #performs an action and gets rewarded
+    def makeAction(self, action):
         reward = 0
-        lost = False
-        #print(action)
-        if(action == 'Speed0'):
+        lost = False #Lost = did it hit a wall?
+        if(action == 'Forward'): #Drive forward only
             self.newVelo.angular.z = 0.0
-            self.lastActionZ[0] = self.newVelo.angular.z
-            self.newVelo.linear.x = actionValues[0]
-        elif(action == 'LeftTurn'):
-            self.newVelo.angular.z= 0.20
-            self.lastActionZ[0] = self.newVelo.angular.z
-            self.newVelo.linear.x = actionValues[3]
-        elif(action == 'RightTurn'):
-            self.newVelo.angular.z = -0.20
-            self.lastActionZ[0] = self.newVelo.angular.z
-            self.newVelo.linear.x = actionValues[3]
-        elif(action == 'LeftTurn1'):
+            self.newVelo.linear.x = 0.2
+            reward = reward + 5
+        elif(action == 'LeftTurn'): #Turn slightly to the left
             self.newVelo.angular.z= 0.30
-            self.lastActionZ[0] = self.newVelo.angular.z
-            self.newVelo.linear.x = actionValues[3]
-        elif(action == 'RightTurn1'):
+            reward = reward + 1
+            self.newVelo.linear.x = 0.05
+        elif(action == 'RightTurn'): #Turn slightly to the right
             self.newVelo.angular.z = -0.30
-            self.lastActionZ[0] = self.newVelo.angular.z
-            self.newVelo.linear.x = actionValues[3]
-        elif(action == 'RedoTurn'):
-            self.newVelo.angular.z = -2*self.lastActionZ[0] 
-            self.lastActionZ[0] = 0
-            self.newVelo.linear.x = actionValues[3]
-        self.lastScan = np.copy(self.scan)
-        self.velo_move.publish(self.newVelo)  #Publish
-        self.checkDistance() #checkDistanceForRewards
-        left = np.mean(self.scan[12:18])
-        right = np.mean(self.scan[226:233])
-
-        leftOld = np.mean(self.lastScan[12:18])
-        rightOld = np.mean(self.lastScan[226:233])
-
-        diff = np.abs(left-right)
-        oldDiff = np.abs(leftOld-rightOld)
-        if(np.amin(self.scan)<=0.18):
+            reward = reward + 1
+            self.newVelo.linear.x = 0.05
+        self.velo_move.publish(self.newVelo)  #Publish the movement
+        self.checkDistance() #get the new scan
+        left = self.scan[15] #Left scan
+        right = self.scan[229]#Right scan
+        #check for inf
+        if(left > 5):
+            left = 5
+        if(right > 5):
+            right = 5
+        #check if the robot has hit a wall
+        if(np.amin(self.scan)<=0.20):
             print('Lost Game: Collision')
-            reward = reward - self.rewards[6]
+            reward = -200
             lost=True
-        else:
-            reward = reward + (0.25-diff)*(self.rewards[4])       
-            if(oldDiff>diff):
-                reward = reward + self.rewards[1]
-            if(self.newVelo.linear.x>0):
-                reward = reward + self.rewards[3]
-                if(np.amin(self.scan)<=0.35):
-                    reward = reward - self.rewards[0]
-                    if(np.amin(self.scan)>=np.amin(self.lastScan)):
-                        reward = reward + self.rewards[2]
-                    else:
-                        reward = reward - self.rewards[2]
-            else:
-                if(self.lastScan[129]< 3 and self.lastScan[129]< 3  and self.scan[129]>=self.lastScan[129]):
-                    reward = reward + self.rewards[5]
-                elif(self.scan[129]<3  and self.lastScan[129]< 3 and self.scan[129]<self.lastScan[129]):
-                    reward = reward - self.rewards[5]
-        text='Step:'+str(self.steps)+';'+'diff:'+str(diff)+';'+'0:'+str(self.scan[129])+'Min:'+str(np.amin(self.scan))+';\n'
-        with open("Diff.txt", "a") as text_file:
-            text_file.write(text)  
-            text_file.close()
+        else:     
+            #reward = reward + (0.3 - np.abs(left-right))*50
+            if(np.amin(self.scan)<=0.4): #Check how close it already is to a wall
+                reward = reward - ((0.4-np.amin(self.scan))*10)
+            if(np.abs(self.scan[129]) > 6): #check for inf
+                self.scan[129] = 6
+            reward = reward + self.scan[129]*6 #No wall is good
         return reward, lost
 
+    #main function
     def learn(self):
-        self.steps = 0
-        overallReward = 0
-        currentState = self.stateSpace[1]
-        done = False
+        self.steps = 0 #steps (amount of actions) per episode
+        currentState = self.stateSpace[1] #get the initial state
         lost = False
+        done=False
         print("Episode", self.episode)
         print("Epsilon", self.epsilon)
         while not done:
-            done = False
-            
-            oldState,oldStateId, self.stateSpace, self.QTable=self.getState(currentState, self.stateSpace,self.QTable)
-            
-            if(lost):
+            oldState,oldStateId, self.stateSpace, Q=self.getState(currentState, self.stateSpace,self.QTable) #get info about the old state
+            if(lost): #next episode
                 self.episode = self.episode +1
                 print("Episode", self.episode)
                 print('Steps', self.steps)
-                print('overallReward', overallReward)
-                if(self.episode %2 == 0):
-                    title = 'QTable_'+str(self.episode)+'.out'
+                if(self.episode %10 == 0): #Save the QTable and stateSpace every 10 episodes
+                    title = 'QTable_Track1'+'.out'
                     np.savetxt(title, self.QTable, delimiter=';',fmt='%.8f')   # X is an array
-                    title = 'StateSpace_'+str(self.episode)+'.out'
-                    np.savetxt(title, self.stateSpace, delimiter=';',fmt='%.2f')   # X is an array
-                self.reset_simulation() 
-                currentState = self.stateSpace[1]
-                self.newVelo.linear.x = 0
-                self.newVelo.angular.z = 0
+                    title = 'StateSpace_Track1'+'.out'
+                    np.savetxt(title, self.stateSpace, delimiter=';',fmt='%.1f')   # X is an array
+                self.reset_simulation() #Reset Gazebo
+                currentState = self.stateSpace[1] #Set back to startin state
+                self.newVelo.linear.x = 0 #Initial movement
+                self.newVelo.angular.z = 0#Initial movement
                 lost=False
-                if(self.episode > 5):
-                    self.epsilon = 0.6
-                    self.learnRate = 0.5
-                if(self.episode > 10):
-                    self.epsilon = 0.4
-                    self.learnRate = 0.4
-                if(self.episode > 20):
-                    self.epsilon = 0.2
-                    self.learnRate = 0.2
-                if(self.episode >= 25):
-                    self.epsilon = 0.1
-                    self.learnRate = 0.2
-                if(self.episode >= 30):
-                    print('Test', overallReward)
-                    self.epsilon = 0.0
-                    self.learnRate = 0.0
-                overallReward = 0
+                self.epsilon = self.epsilon*self.epsilonDecrease #Decreasing epsilon
                 print("Epsilon", self.epsilon)
                 self.steps = 0
-            if random.uniform(0,1)<self.epsilon:
-                actionId = random.randrange(self.actions.shape[0]) 
-                chooseAction = self.actions[actionId]      
+            if random.uniform(0,1)<self.epsilon: # Check if movement is random or from QTable
+                actionId = random.randrange(self.actions.shape[0]) #Get action Id
+                chooseAction = self.actions[actionId] #get the action      
             else:
-                currentState,stateId, self.stateSpace, self.QTable=self.getState(currentState, self.stateSpace,self.QTable)
-                actionId = np.argmax(self.QTable[stateId, :])
-                chooseAction = self.actions[actionId]  
-            myReward, lost = self.makeAction(chooseAction,self.actionValues)
-            currentState,stateId, self.stateSpace, self.QTable=self.getState(self.scan , self.stateSpace, self.QTable)
-            self.QTable[oldStateId, actionId] = self.QTable[oldStateId, actionId] + self.learnRate * (myReward+self.gamma*np.max(self.QTable[stateId, :]) - self.QTable[oldStateId,actionId])
-            self.steps = self.steps+1
-            overallReward = overallReward + myReward
-
-
+                currentState,stateId, self.stateSpace, self.QTable=self.getState(currentState, self.stateSpace,self.QTable) #get the state info
+                if(np.count_nonzero(currentState) == 0): #check if the state was visited at leats once
+                    actionId = random.randrange(self.actions.shape[0]) #random movement
+                else:
+                    actionId = np.argmax(self.QTable[stateId, :]) #chose movement from QTable
+                chooseAction = self.actions[actionId] #Choose the action
+            myReward, lost = self.makeAction(chooseAction) #do the action, get reward
+            currentState,stateId, self.stateSpace, self.QTable=self.getState(self.scan , self.stateSpace, self.QTable) #get new state
+            self.QTable[oldStateId, actionId] = self.QTable[oldStateId, actionId] + self.learnRate * (myReward+self.gamma*np.max(self.QTable[stateId, :]) - self.QTable[oldStateId,actionId]) #update old state on results of new one
+            self.steps = self.steps+1 #update steps
+            if(self.episode >= self.maxEpisodes): #check if we are done
+                done = True
 
     def run(self, rate: float = 30):
         print("Start")
-        self.get_distance()
-        while not rospy.is_shutdown():
-            self.learn()
+        r = rospy.Rate(rate)
+        self.init()
+        self.learn()
 
 if __name__ == '__main__':
     rospy.init_node('learnToMove')
     learnToMove = learnToMove()
-    learnToMove.run(rate=30)
+    learnToMove.run(rate=1000)

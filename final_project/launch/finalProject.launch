@@ -2,10 +2,11 @@
     <include file="$(find rto_bringup_sim)/launch/robot.launch" />
 
     <node pkg="final_project" type="reinforcmentLearning.py" name="final_project" output="screen">
-        <param name="learnRate" value="0.85" />
-        <param name="epsilon" value="0.3" />
-        <param name="gamma" value="0.8" />
-        <param name="actionValues" value="[0.5,0.25,0.5,0.25]" />
-        <param name="maxEpisodes" value="5" />
+        <param name="learnRate" value="0.9" />
+        <param name="epsilon" value="0.9" />
+        <param name="gamma" value="0.9" />
+        <param name="maxEpisodes" value="3000" />
+        <param name="epsilonDecrease" value="0.9987" />
+        <param name="load" value="False" />
     </node>
 </launch>
