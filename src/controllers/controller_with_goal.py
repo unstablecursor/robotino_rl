@@ -36,7 +36,6 @@ class ControllerNode:
     def __init__(self):
         # Initialize member variables
         self.sim_lock = Lock()
-
         self.sub_twist = rospy.Subscriber('/input/cmd_vel', Twist, self.get_and_filter_twist)
         self.sub_scan = rospy.Subscriber('/scan', LaserScan, self.get_scan)
             

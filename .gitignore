@@ -4,3 +4,5 @@ src/controllers/__pycache__/__init__.cpython-38.pyc
 src/components/__pycache__/parameters.cpython-38.pyc
 src/components/__pycache__/network.cpython-38.pyc
 src/components/__pycache__/memory.cpython-38.pyc
+.vscode/settings.json
+.vscode/c_cpp_properties.json
