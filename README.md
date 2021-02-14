@@ -51,7 +51,7 @@ After many training iterations the QTable should be able to guide the robot prop
 ## How to start the learning :
 First run  `roslaunch rto_bringup_sim robot.launch` (remember to use a world from the `worlds` folder)
 
-Use the launch-file:  `roslaunch finalProject finalProject.launch`
+Use the launch-file after building the package:  `roslaunch robotino_rl finalProject.launch`
 
 finalProject.launch. The world and starting coordinates are choosen in rto-bringup-sim launch file. 
 
