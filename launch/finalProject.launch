@@ -1,0 +1,10 @@
+<launch>
+    <node pkg="robotino_rl" type="reinforcmentLearning.py" name="robotino_rl" output="screen">
+        <param name="learnRate" value="0.9" />
+        <param name="epsilon" value="0.9" />
+        <param name="gamma" value="0.9" />
+        <param name="maxEpisodes" value="3000" />
+        <param name="epsilonDecrease" value="0.9987" />
+        <param name="load" value="False" />
+    </node>
+</launch>
