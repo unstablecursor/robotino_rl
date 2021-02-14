@@ -49,7 +49,7 @@ After many training iterations the QTable should be able to guide the robot prop
 
 
 ## How to start the learning :
-First run  `roslaunch rto_bringup_sim robot.launch`
+First run  `roslaunch rto_bringup_sim robot.launch` (remember to use a world from the `worlds` folder)
 
 Use the launch-file:  `roslaunch finalProject finalProject.launch`
 
@@ -122,7 +122,7 @@ We've created many different worlds to test our algorithm in, which can be seen 
 
 ## How to start the learning:
 
-First start the simulation with `roslaunch rto_bringup_sim robot.launch`
+First start the simulation with `roslaunch rto_bringup_sim robot.launch` (remember to use a world from the `worlds` folder)
 
 Then start training:  `python deep_rl_train.py`
 

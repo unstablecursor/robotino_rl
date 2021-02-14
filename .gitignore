@@ -6,3 +6,9 @@ src/components/__pycache__/network.cpython-38.pyc
 src/components/__pycache__/memory.cpython-38.pyc
 .vscode/settings.json
 .vscode/c_cpp_properties.json
+src/controllers/__pycache__/controller_simple.cpython-38.pyc
+src/controllers/__pycache__/controller_with_checkpoints.cpython-38.pyc
+src/parameters/__pycache__/global_parameters.cpython-38.pyc
+src/parameters/__pycache__/parameters_checkpoints.cpython-38.pyc
+src/parameters/__pycache__/parameters_goal_distance.cpython-38.pyc
+src/parameters/__pycache__/parameters_simple.cpython-38.pyc
