@@ -3,7 +3,7 @@ class global_parameters:
     
     # Training mode (accepted values: "simple", "goal_distance", "checkpoints")
     # This variable decides which controller node is used during training
-    TRAINING_MODE = "simples"
+    TRAINING_MODE = "simple"
 
     #maximum amount of episodes in a training run
     NUM_EPISODES = 501
