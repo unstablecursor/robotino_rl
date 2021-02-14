@@ -29,7 +29,8 @@ from std_srvs.srv import Empty
 from pcimr_simulation.srv import InitPos
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest, SetModelState, SetModelStateRequest
 
-from components.parameters import *
+from parameters.global_parameters import global_parameters
+from parameters.parameters_checkpoints import parameters_checkpoints as param
 
 class ControllerNode:
 
@@ -61,14 +62,14 @@ class ControllerNode:
         self.robot_twist = msg
     
     def process_laserscan(self, l):
-        if INPUT_PROCESSING == "max":
+        if param.INPUT_PROCESSING == "max":
             x = []
             maxim = 0
             it = 0
             for i in l:
                 if i >= maxim:
                     maxim = i
-                if it % INPUT_SLICE_SIZE == 0:
+                if it % param.INPUT_SLICE_SIZE == 0:
                     x.append(maxim)
                     maxim=0
                 it+=1
@@ -77,7 +78,7 @@ class ControllerNode:
             x = []
             it = 0
             for i in l:
-                if it % INPUT_SLICE_SIZE == 0:
+                if it % param.INPUT_SLICE_SIZE == 0:
                     x.append(i)
                 it+=1
             return x
@@ -86,7 +87,7 @@ class ControllerNode:
         self.scan = msg
         
     def get_env(self):
-        if USE_GOAL_DISTANCE_AS_INPUT:
+        if param.USE_GOAL_DISTANCE_AS_INPUT:
             x = self.process_laserscan(self.scan.ranges) + [self.check_goal_distance()]
             return torch.FloatTensor(x)
         else:
@@ -107,10 +108,10 @@ class ControllerNode:
         return math.sqrt(diff_x*diff_x + diff_y*diff_y)
     
     def get_reward(self):
-        if REWARD_STYLE == "punish_close_walls":
-            if min(self.scan.ranges) < COLLISION_DISTANCE:
+        if param.REWARD_STYLE == "punish_close_walls":
+            if min(self.scan.ranges) < param.COLLISION_DISTANCE:
                 return -1.0
-            elif self.check_goal_distance() < GOAL_ACCEPT_DISTANCE:
+            elif self.check_goal_distance() < param.GOAL_ACCEPT_DISTANCE:
                 return +1.0
             elif min(self.scan.ranges) > 1.0:
                 return -0.005 #- 0.01 * (self.check_goal_distance() - 4.9)
@@ -121,10 +122,10 @@ class ControllerNode:
             else:
                 return -0.2 #- 0.01 * (self.check_goal_distance() - 4.9) 
         else:
-            if min(self.scan.ranges) < COLLISION_DISTANCE:
+            if min(self.scan.ranges) < param.COLLISION_DISTANCE:
                 return -1.0
             
-            elif self.check_goal_distance() < GOAL_ACCEPT_DISTANCE:
+            elif self.check_goal_distance() < param.GOAL_ACCEPT_DISTANCE:
                 return +1.0
             
             return 0.3
@@ -132,15 +133,15 @@ class ControllerNode:
 
     def use_action(self, nr):
         if nr == 0:
-            self.cmd_vel.linear.x = SPEED_X
+            self.cmd_vel.linear.x = param.SPEED_X
             self.cmd_vel.linear.y = 0.0
             self.cmd_vel.angular.z = 0.0
         if nr == 1:
-            self.cmd_vel.linear.x = SPEED_X / 4
-            self.cmd_vel.linear.y = SPEED_Y
+            self.cmd_vel.linear.x = param.SPEED_X / 4
+            self.cmd_vel.linear.y = param.SPEED_Y
             self.cmd_vel.angular.z = 0.0#ANGULAR_Z
         if nr == 2:
-            self.cmd_vel.linear.x = SPEED_X / 4
-            self.cmd_vel.linear.y = -SPEED_Y
+            self.cmd_vel.linear.x = param.SPEED_X / 4
+            self.cmd_vel.linear.y = -param.SPEED_Y
             self.cmd_vel.angular.z = 0.0#-ANGULAR_Z
         self.pub_twist.publish(self.cmd_vel)

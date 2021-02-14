@@ -1,16 +1,15 @@
 
 import torch.nn as nn
 import torch.nn.functional as F
-from components.parameters import N_INPUTS,FIRST_LAYER, SECOND_LAYER, THIRD_LAYER, N_ACTIONS
 
 class DQN(nn.Module):
 
-    def __init__(self):
+    def __init__(self, n_inputs, first_layer, second_layer, third_layer, n_actions):
         super(DQN, self).__init__()
-        self.fc1 = nn.Linear(int(N_INPUTS), FIRST_LAYER)
-        self.fc2 = nn.Linear(FIRST_LAYER, SECOND_LAYER)
-        self.fc3 = nn.Linear(SECOND_LAYER, THIRD_LAYER)
-        self.fc4 = nn.Linear(THIRD_LAYER, N_ACTIONS)
+        self.fc1 = nn.Linear(int(n_inputs), first_layer)
+        self.fc2 = nn.Linear(first_layer, second_layer)
+        self.fc3 = nn.Linear(second_layer, third_layer)
+        self.fc4 = nn.Linear(third_layer, n_actions)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
