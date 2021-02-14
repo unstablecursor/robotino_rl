@@ -30,20 +30,23 @@ from pcimr_simulation.srv import InitPos
 from gazebo_msgs.srv import GetModelState, GetModelStateRequest, SetModelState, SetModelStateRequest
 
 from parameters.global_parameters import global_parameters
-from parameters.parameters_checkpoints import parameters_checkpoints as param
+from parameters.parameters_goal_distance import parameters_goal_distance as param
 
 class ControllerNode:
-
+    """[Controller Node]
+        Handles basic communication with simulation and generates rewards.
+    """
     def __init__(self):
+        """
+            Initialize basic publishers and subscribers
+        """        
         # Initialize member variables
         self.sim_lock = Lock()
-        self.sub_twist = rospy.Subscriber('/input/cmd_vel', Twist, self.get_and_filter_twist)
         self.sub_scan = rospy.Subscriber('/scan', LaserScan, self.get_scan)
             
         self.pub_twist = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
 
         self.scan = LaserScan()
-        self.robot_twist = Twist()
         self.cmd_vel = Twist()
         
         #the service that lets you get the state of a model withing the gazebo environment (including position)
@@ -57,11 +60,16 @@ class ControllerNode:
         self.goal_model = GetModelStateRequest()
         self.goal_model.model_name='goal'
 
-
-    def get_and_filter_twist(self, msg):
-        self.robot_twist = msg
     
     def process_laserscan(self, l):
+        """Processes laserscan input. 
+
+        Args:
+            l (List): Input to the function, list of floats
+
+        Returns:
+            List: Filtered laserscan.
+        """        
         if param.INPUT_PROCESSING == "max":
             x = []
             maxim = 0
@@ -94,8 +102,12 @@ class ControllerNode:
             x = self.process_laserscan(self.scan.ranges)
             return torch.FloatTensor(x)
     
-    #get the distance between the robot "rto-1" and "goal" object
     def check_goal_distance(self):
+        """ Returns the distance between the robot "rto-1" and "goal" object
+
+        Returns:
+            float: Euclidian distance b/w robot and goal
+        """        
         result = self.get_model_srv(self.robot_model)
         robot_pos = result.pose.position
 
@@ -132,6 +144,11 @@ class ControllerNode:
 
 
     def use_action(self, nr):
+        """Action publisher
+
+        Args:
+            nr (int): Which action to perform
+        """        
         if nr == 0:
             self.cmd_vel.linear.x = param.SPEED_X
             self.cmd_vel.linear.y = 0.0

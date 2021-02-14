@@ -14,11 +14,17 @@ class parameters_goal_distance:
     REPLAY_MEM_SIZE = 100000
     BATCH_SIZE = 64
     GAMMA = 0.99
+    # Start value of epsilon
     EPS_START = 0.99
+    # End value of epsilon
     EPS_END = 0.05
+    # Decay (in iterations, each action/reward cycle is counted as 1 decay)
     EPS_DECAY = 5000
+    # Target network update after X episodes
     TARGET_UPDATE = 10
+    # Loss function Beta value (Huber loss default=1.0)
     BETA = 1.0
+    # Learning rate for optimizer (default is 1e-2)
     LEARNING_RATE = 1e-3
 
     # Input processing values
@@ -30,12 +36,13 @@ class parameters_goal_distance:
     INPUT_PROCESSING = "max"
     REWARD_STYLE = "punish_close_walls"
     LOSS_TYPE = "huber_loss"
-
+    
+    # Pause simulation during optimization to reduce delay b/w rewards and actions
     PAUSE_SIM = True
 
     GOAL_ACCEPT_DISTANCE = 1.0
     COLLISION_DISTANCE = 0.25
-
+    # Whether to include goal distance as an input to the network.
     USE_GOAL_DISTANCE_AS_INPUT = False
 
 
